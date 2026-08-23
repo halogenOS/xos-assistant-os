@@ -1,0 +1,195 @@
+{
+  "nodes": {
+    "agent-ledger-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787515197,
+        "narHash": "sha256-fjInK10BrtR9srf6MOqa+ZsBmx48v+i4tcDK5cagHrY=",
+        "ref": "main",
+        "rev": "df4e9f99347212619f984a1749b54f4ef0d97cd7",
+        "revCount": 37,
+        "type": "git",
+        "url": "https://github.com/xdevs23/ronna-core"
+      },
+      "original": {
+        "ref": "main",
+        "rev": "df4e9f99347212619f984a1749b54f4ef0d97cd7",
+        "type": "git",
+        "url": "https://github.com/xdevs23/ronna-core"
+      }
+    },
+    "assistant-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787506445,
+        "narHash": "sha256-9E/f7fbZubzEZx5yUgZhGDRZ2ULf/WzWN8bt9tuXxCg=",
+        "ref": "main",
+        "rev": "d83ddcd4dd3dfa4e2bacef31cf4b8dde1933600d",
+        "revCount": 86,
+        "type": "git",
+        "url": "https://github.com/halogenOS/xos-assistant"
+      },
+      "original": {
+        "ref": "main",
+        "rev": "d83ddcd4dd3dfa4e2bacef31cf4b8dde1933600d",
+        "type": "git",
+        "url": "https://github.com/halogenOS/xos-assistant"
+      }
+    },
+    "foundrix": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-stable": "nixpkgs-stable",
+        "nixpkgs-unstable": "nixpkgs-unstable"
+      },
+      "locked": {
+        "lastModified": 1787085191,
+        "narHash": "sha256-g551TTAjJl+XF2caIbNzgSlLfl+imtcHc6YL+emSMqA=",
+        "ref": "refs/heads/main",
+        "rev": "9af622b7fd8cc252cee9befaecb0ab8fd5c7a1bd",
+        "revCount": 390,
+        "type": "git",
+        "url": "https://codeberg.org/xdevs23/foundrix"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://codeberg.org/xdevs23/foundrix"
+      }
+    },
+    "home-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787377438,
+        "narHash": "sha256-Sxu1NLTD/Ern6hFGLlZmtKCSct3YQXZI/lls8RE1XeM=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "65258d5c65a250189fde2e35f490d15e064c4c62",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "ref": "release-26.05",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "nixos-hardware": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1787144466,
+        "narHash": "sha256-HHfv2/HkNSKbbSyU9iD/g8lbP6r4tl33sSw1W4rXCk0=",
+        "owner": "NixOS",
+        "repo": "nixos-hardware",
+        "rev": "0471accf8d0a8210b31d947497d179ecc99e0021",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "master",
+        "repo": "nixos-hardware",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1767892417,
+        "narHash": "sha256-8bW3q88CEg2u4hSP66Vf4lpbLonHz7hqDNBMcCY7E9U=",
+        "rev": "3497aa5c9457a9d88d71fa93a4a8368816fbeeba",
+        "type": "tarball",
+        "url": "https://releases.nixos.org/nixos/unstable/nixos-26.05pre924538.3497aa5c9457/nixexprs.tar.xz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz"
+      }
+    },
+    "nixpkgs-master": {
+      "locked": {
+        "lastModified": 1786803421,
+        "narHash": "sha256-UiCSxDBXWG26VQHRZcZDeEBvr+xgXUXRpbYn52fUpdg=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "df3e37e6444fcd97320499055aa40c2121418d14",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-stable": {
+      "locked": {
+        "lastModified": 1786711500,
+        "narHash": "sha256-QvnceIGTBeDvDd9oCn+GvdsnkquliuwbVgpiRH68qaQ=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "02e08985a27c65ffd33d434eeb2e660a2e4dc84d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-unstable": {
+      "locked": {
+        "lastModified": 1786599213,
+        "narHash": "sha256-yNJd40f11EzXBjSByCB7IPpeFFAdeoSKKM67dGkfFoU=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0e251e24a4f24e036a084b6b4b2d2491af4167f4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1787414105,
+        "narHash": "sha256-WncT27+3BOkgTaJZLnCsf3LcYf9RXMuR9ONSN4rzQ7s=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "a9e6d84f9c2f9012f5fe7d964a7851352300e61a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-26.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "agent-ledger-src": "agent-ledger-src",
+        "assistant-src": "assistant-src",
+        "foundrix": "foundrix",
+        "home-manager": "home-manager",
+        "nixos-hardware": "nixos-hardware",
+        "nixpkgs": "nixpkgs_2"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
