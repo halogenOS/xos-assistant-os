@@ -28,7 +28,7 @@
     # sibling checkouts). assistant.nix composes the two sources into that
     # layout before building.
     agent-ledger-src = {
-      url = "git+https://github.com/xdevs23/ronna-core?ref=main&rev=2a8e89527777e2db963c7f2ffddaf769aa548b1a";
+      url = "git+https://github.com/xdevs23/ronna-core?ref=main&rev=d80115161915210443a4fbb410dd020f7bf182f0";
       flake = false;
     };
   };
