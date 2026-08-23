@@ -28,7 +28,7 @@
     # sibling checkouts). assistant.nix composes the two sources into that
     # layout before building.
     agent-ledger-src = {
-      url = "git+https://github.com/halogenOS/agent-ledger?ref=main";
+      url = "git+https://github.com/xdevs23/ronna-core?ref=main&rev=2649b123ed07fae8c50192fd6cffe5b11b3e8573";
       flake = false;
     };
   };
