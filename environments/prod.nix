@@ -9,15 +9,16 @@
 
   # The numeric Telegram user id of the account whose group invitations the
   # assistant accepts.
-  custom.assistant.telegramOperator = "0";
+  custom.assistant.telegramOperator = "11814515";
 
   # The published privacy policy address the /privacy command answers with.
   # Until it exists, leave this commented and the bot answers its fixed
   # not-yet-published line.
-  #custom.assistant.privacyPolicy = "<the published policy address>";
+  custom.assistant.privacyPolicy =
+    "https://git.halogenos.org/halogenOS/legal/src/branch/main/bot-assistant-privacy-policy.md";
 
   # The group's moderation bot, once the report flow is wanted in prod.
-  #custom.assistant.moderationHandle = "<the moderation bot's handle>";
+  custom.assistant.moderationHandle = "MissRose_bot";
 
   # Direct chats stay off until their feature set ships.
   #custom.assistant.directChats = "on";
