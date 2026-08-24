@@ -21,17 +21,17 @@
     "assistant-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1787593617,
-        "narHash": "sha256-hk/5/ahGck0mTk0FfAxBE5omlWFsi+hHc7oCuM0PZbk=",
+        "lastModified": 1787604438,
+        "narHash": "sha256-A8W9iIH8fGaxj8VFdvoOh2pNotZugXEpHtvejSt3TB0=",
         "ref": "main",
-        "rev": "c23eb03a4089f99f9d9e94a85dc05c6911b64ff2",
-        "revCount": 133,
+        "rev": "3f2384fae9761bab69b6fae6fc2e5e4042cab184",
+        "revCount": 135,
         "type": "git",
         "url": "https://github.com/halogenOS/xos-assistant"
       },
       "original": {
         "ref": "main",
-        "rev": "c23eb03a4089f99f9d9e94a85dc05c6911b64ff2",
+        "rev": "3f2384fae9761bab69b6fae6fc2e5e4042cab184",
         "type": "git",
         "url": "https://github.com/halogenOS/xos-assistant"
       }
