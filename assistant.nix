@@ -92,7 +92,7 @@ let
       moderation_handle = ${tomlString cfg.moderationHandle}
     ''}
     [endpoints]
-    openrouter = ${tomlString cfg.modelEndpoint}
+    chat_completions = ${tomlString cfg.modelEndpoint}
 
     [operators]
     telegram = ${tomlString cfg.telegramOperator}
@@ -100,8 +100,8 @@ let
     [secrets.bot_token]
     env = "BOT_TOKEN"
 
-    [secrets.openrouter_key]
-    env = "OPENROUTER_KEY"
+    [secrets.chat_completions_api_key]
+    env = "CHAT_COMPLETIONS_API_KEY"
   '';
 
   # The credential validator for the operator-secrets collector. The
@@ -129,14 +129,14 @@ let
 
       payload=$(cat)
       bot_token=$(jq -r '.fields.BOT_TOKEN // empty' <<<"$payload")
-      openrouter_key=$(jq -r '.fields.OPENROUTER_KEY // empty' <<<"$payload")
+      chat_completions_api_key=$(jq -r '.fields.CHAT_COMPLETIONS_API_KEY // empty' <<<"$payload")
 
       if [ -z "$bot_token" ]; then
         emit invalid "BOT_TOKEN is empty"
         exit 0
       fi
-      if [ -z "$openrouter_key" ]; then
-        emit invalid "OPENROUTER_KEY is empty"
+      if [ -z "$chat_completions_api_key" ]; then
+        emit invalid "CHAT_COMPLETIONS_API_KEY is empty"
         exit 0
       fi
 
@@ -222,9 +222,9 @@ in
       type = lib.types.str;
       default = "https://router.eu.requesty.ai/v1";
       description = ''
-        The OpenRouter-compatible base URL the bot answers through — the
-        Requesty EU router. A change here must be mirrored in the egress
-        list in configuration.nix, which names the router's host.
+        The OpenAI-compatible chat-completions base URL the bot answers
+        through — the Requesty EU router. A change here must be mirrored in
+        the egress list in configuration.nix, which names the router's host.
       '';
     };
 
@@ -232,7 +232,7 @@ in
       type = lib.types.str;
       default = "/var/credentials/assistant.env";
       description = ''
-        The env file holding BOT_TOKEN and OPENROUTER_KEY, written by the
+        The env file holding BOT_TOKEN and CHAT_COMPLETIONS_API_KEY, written by the
         operator-secrets collector and read by the service. Rests on /var,
         which devices/hetzner puts on LUKS.
       '';
@@ -260,7 +260,7 @@ in
           order = 10;
           sensitive = true;
         };
-        OPENROUTER_KEY = {
+        CHAT_COMPLETIONS_API_KEY = {
           description = "API key for the configured model endpoint";
           order = 20;
           sensitive = true;
