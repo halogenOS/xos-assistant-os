@@ -110,6 +110,14 @@ in
 
   system.stateVersion = "25.05";
 
+  # The assistant's character lives here rather than in the bot's own
+  # repository (operator, 2026-08-24): a voice belongs to the deployment
+  # wearing it, not to the shared source every deployment builds from.
+  # Practically it also means changing how she speaks is a commit here and a
+  # small rebuild, instead of a new bot revision and a full compile on the
+  # machine. Both environments wear the same character, so it is set once.
+  custom.assistant.persona = builtins.readFile ./persona.md;
+
   # nameservers and FallbackDNS come from foundrix's dns-resolvers module
   services.resolved.settings.Resolve.DNSSEC = "false";
 
