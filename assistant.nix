@@ -63,10 +63,25 @@ let
   # the service's StateDirectory; the system prompt is read straight out of
   # the source input, so prompt changes deploy with the bot revision. Log
   # lines go to stderr, which the unit routes into the journal.
+  # The prompt directory the process reads. The bot revision ships the prose
+  # as several files, joined in file-name order; a configured persona
+  # replaces exactly the one that carries the voice, so the shared prose is
+  # never forked to change a character. Unset, the source directory is used
+  # as it ships.
+  promptDir =
+    if cfg.persona == null then
+      "${inputs.assistant-src}/prompts"
+    else
+      pkgs.runCommand "assistant-prompts" { } ''
+        mkdir -p $out
+        install -m 0444 ${inputs.assistant-src}/prompts/*.md $out/
+        install -m 0444 ${pkgs.writeText "persona.md" cfg.persona} $out/20-persona.md
+      '';
+
   configFile = pkgs.writeText "assistant.toml" ''
     store_path = "/var/lib/assistant/assistant.db"
     telegram_state_path = "/var/lib/assistant/telegram.offset"
-    prompt_dir = ${tomlString "${inputs.assistant-src}/prompts"}
+    prompt_dir = ${tomlString promptDir}
     log = "stderr"
     model = ${tomlString cfg.model}
     direct_chats = ${tomlString cfg.directChats}
@@ -179,6 +194,19 @@ in
       # bot's own configuration doc names this as the deployment stance.
       default = "off";
       description = "Whether direct chats are served.";
+    };
+
+    persona = lib.mkOption {
+      type = lib.types.nullOr lib.types.lines;
+      default = null;
+      description = ''
+        The assistant's voice — who it is and how it speaks. Null takes the
+        persona the bot revision ships, which is the usual case; setting it
+        replaces that one file and leaves the rest of the prompt alone, so a
+        deployment can carry its own character without forking the prose it
+        shares with every other deployment. Changing this is a commit here
+        rather than a bot revision.
+      '';
     };
 
     model = lib.mkOption {
