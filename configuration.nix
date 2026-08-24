@@ -20,8 +20,6 @@ in
     foundrixModules.config.filesystem.var
     foundrixModules.services.secrets
     foundrixModules.services.operator-secrets
-    foundrixModules.services.nftables-dns
-    foundrixModules.config.networking.controlled-egress-firewall
     foundrixModules.config.networking.dns-resolvers
     ./assistant.nix
     ./auto-update.nix
@@ -115,77 +113,21 @@ in
   # nameservers and FallbackDNS come from foundrix's dns-resolvers module
   services.resolved.settings.Resolve.DNSSEC = "false";
 
-  # Dynamic DNS resolution for nftables. Two groups of hosts, and nothing
-  # else leaves this machine:
+  # Outbound is UNRESTRICTED (2026-08-24, operator's decision). The assistant
+  # is gaining features that read the open web — a search result is any host,
+  # and a page it opens is a host nobody can enumerate in advance — so an
+  # egress allowlist cannot express what this machine legitimately reaches.
   #
-  # The assistant's outbound world — the Bot API, the model endpoint, and
-  # the three lookup hosts (canonical forge, release mirror API, raw wiki
-  # pages). The forge entry doubles as the self-updater's own repository
-  # host.
+  # What that gives up, stated rather than glossed: the allowlist was a
+  # containment boundary. A compromised or prompt-injected assistant could
+  # previously only talk to the Bot API, the model endpoint and a few lookup
+  # hosts; now it can talk to anything. The inbound side is unchanged and is
+  # what still protects the machine — nothing listens but ssh on 2222, and the
+  # cloud firewall refuses the rest.
   #
-  # The self-updater's build world — the flake inputs (codeberg for
-  # foundrix, github for nixpkgs/home-manager/nixos-hardware) and the
-  # binary cache. api.github.com is shared with the release lookup.
-  foundrix.services.nftables-dns = {
-    enable = true;
-    allowedConnections = [
-      # assistant
-      {
-        host = "api.telegram.org";
-        ports = [ 443 ];
-      }
-      {
-        host = "router.eu.requesty.ai";
-        ports = [ 443 ];
-      }
-      {
-        host = "git.halogenos.org";
-        ports = [ 443 ];
-      }
-      {
-        host = "raw.githubusercontent.com";
-        ports = [ 443 ];
-      }
-      {
-        host = "api.github.com";
-        ports = [ 443 ];
-      }
-      # self-updater
-      {
-        host = "cache.nixos.org";
-        ports = [ 443 ];
-      }
-      {
-        host = "codeberg.org";
-        ports = [ 443 ];
-      }
-      {
-        host = "github.com";
-        ports = [ 443 ];
-      }
-      {
-        host = "codeload.github.com";
-        ports = [ 443 ];
-      }
-      # resolved's fallback servers
-      {
-        host = "cloudflare-dns.com";
-        ports = [ 53 ];
-        protocol = "udp";
-      }
-      {
-        host = "dns.quad9.net";
-        ports = [ 53 ];
-        protocol = "udp";
-      }
-    ]
-    ++ map (host: {
-      inherit host;
-      ports = [ 123 ];
-      protocol = "udp";
-    }) config.networking.timeServers;
-    updateInterval = "1h";
-  };
+  # The DNS-resolved nftables sets went with it: they existed only to fill
+  # that allowlist, and resolving hosts hourly for a ruleset nothing consults
+  # would be work with no reader.
 
   # 2223 (initrd sshd, LUKS passphrase) is deliberately absent: it only ever
   # listens in stage 1, where this firewall does not exist yet, and nothing
@@ -194,21 +136,7 @@ in
     2222 # admin OpenSSH
   ];
 
-  foundrix.config.networking.controlled-egress-firewall = {
-    enable = true;
-    allowLinkLocalMetadata = true;
-  };
-
-  # The credential validator makes a real HTTPS request to the Bot API, and
-  # that host is admitted by a resolved nftables entry, not a static rule:
-  # both the base ruleset and the first resolution run must be in place
-  # before the collector, or the validator's request is dropped and it
-  # reports `error`.
-  systemd.services.operator-secrets = {
-    after = [
-      "nftables.service"
-      "nftables-dns-update.service"
-    ];
-    wants = [ "nftables-dns-update.service" ];
-  };
+  # The credential validator makes a real HTTPS request to the Bot API. With
+  # egress unrestricted there is no resolved ruleset for it to wait on, so the
+  # ordering that existed for that reason is gone with it.
 }
