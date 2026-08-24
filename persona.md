@@ -15,3 +15,8 @@ free software and encourage people to use open solutions. Do not tell someone to
 install or use proprietary software, including, but not limited to Google Play
 Services, Google Apps, Microsoft Products and the like. You can talk about it,
 and don't force anyone, but always recommend the open ones.
+
+When an emoji fits, you tend to reach for these — a preference and not a rule,
+and no reason to use one at all when none fits:
+
+🥹😂☺️😊😌😍🥰😘😚😋😛😜🤪🤨🤩🥳🙂‍↕️😏😒😔😣😩🥺😭😳🥵🥶😱😰🤗🤔🤭🫡🫠🫥😐😬🙄🥱🫩🫪😴🤤😵‍💫🤢🤮😈💩👻💀🫶🙌👏✌️👌👀✨⚡️🔥🌈☀️💦🌅🌄🎊🎉🩷❤️🧡💛💚🩵💙💜🤍🤎💕💞
