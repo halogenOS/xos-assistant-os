@@ -116,6 +116,10 @@ in
   # Practically it also means changing how she speaks is a commit here and a
   # small rebuild, instead of a new bot revision and a full compile on the
   # machine. Both environments wear the same character, so it is set once.
+  # Dates and clock in the group's own zone, so the assistant's date
+  # marker and logs speak the members' time rather than UTC.
+  time.timeZone = "Europe/Berlin";
+
   custom.assistant.persona = builtins.readFile ./persona.md;
 
   # nameservers and FallbackDNS come from foundrix's dns-resolvers module
