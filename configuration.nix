@@ -121,6 +121,12 @@ in
   time.timeZone = "Europe/Berlin";
 
   custom.assistant.persona = builtins.readFile ./persona.md;
+  # glm-5.3-flash through sference, the EU-hosted provider on the same EU
+  # router. Naming the provider pins the routing, so no region modifier —
+  # the @eu form does not resolve for single-provider entries (tested
+  # 2026-08-27). Swapped from vertex/gemini-3.7-flash@eu for cost and
+  # capability.
+  custom.assistant.model = "sference/glm-5.3-flash";
 
   # nameservers and FallbackDNS come from foundrix's dns-resolvers module
   services.resolved.settings.Resolve.DNSSEC = "false";
