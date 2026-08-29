@@ -19,7 +19,7 @@
     # run is explicit here; updating the bot means moving this rev (and the
     # framework's beside it) and committing.
     assistant-src = {
-      url = "git+https://github.com/halogenOS/xos-assistant?ref=main&rev=caa8f06b3905cfb47903382d5edbcf314966b52d";
+      url = "git+https://github.com/halogenOS/xos-assistant?ref=main&rev=4f0f281639720129fc6378455c267f7c97a78e87";
       flake = false;
     };
     # The ledger framework the assistant's workspace names by a relative
@@ -28,7 +28,7 @@
     # sibling checkouts). assistant.nix composes the two sources into that
     # layout before building.
     agent-ledger-src = {
-      url = "git+https://github.com/xdevs23/ronna-core?ref=main&rev=a2147fe0c942b1de70a4a44642558230f47898cd";
+      url = "git+https://github.com/xdevs23/ronna-core?ref=main&rev=738bfe06b5d1e29366d86c4ea39819fd1bb8d53d";
       flake = false;
     };
   };
