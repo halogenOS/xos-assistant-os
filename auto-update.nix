@@ -42,6 +42,10 @@ let
       config.nix.package
     ];
     text = ''
+      # The operator follows these checks in the journal; one dated line per
+      # run makes each check findable without decoding journal timestamps.
+      echo "auto-update check: $(date '+%Y-%m-%d %H:%M %Z')"
+
       state=/var/lib/xos-assistant-auto-update/last-applied
 
       rev=$(git ls-remote ${lib.escapeShellArg cfg.repoUrl} \
