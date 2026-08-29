@@ -91,6 +91,12 @@ let
     ${lib.optionalString (cfg.moderationHandle != null) ''
       moderation_handle = ${tomlString cfg.moderationHandle}
     ''}
+    [protection]
+    principal_answers = 10
+    principal_window_seconds = 300
+    channel_answers = 30
+    channel_window_seconds = 600
+
     [endpoints]
     chat_completions = ${tomlString cfg.modelEndpoint}
 
