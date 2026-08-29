@@ -102,6 +102,9 @@ let
 
     [secrets.chat_completions_api_key]
     env = "CHAT_COMPLETIONS_API_KEY"
+
+    [secrets.search_api_key]
+    env = "SEARCH_API_KEY"
   '';
 
   # The credential validator for the operator-secrets collector. The
@@ -130,6 +133,7 @@ let
       payload=$(cat)
       bot_token=$(jq -r '.fields.BOT_TOKEN // empty' <<<"$payload")
       chat_completions_api_key=$(jq -r '.fields.CHAT_COMPLETIONS_API_KEY // empty' <<<"$payload")
+      search_api_key=$(jq -r '.fields.SEARCH_API_KEY // empty' <<<"$payload")
 
       if [ -z "$bot_token" ]; then
         emit invalid "BOT_TOKEN is empty"
@@ -137,6 +141,10 @@ let
       fi
       if [ -z "$chat_completions_api_key" ]; then
         emit invalid "CHAT_COMPLETIONS_API_KEY is empty"
+        exit 0
+      fi
+      if [ -z "$search_api_key" ]; then
+        emit invalid "SEARCH_API_KEY is empty"
         exit 0
       fi
 
@@ -232,7 +240,8 @@ in
       type = lib.types.str;
       default = "/var/credentials/assistant.env";
       description = ''
-        The env file holding BOT_TOKEN and CHAT_COMPLETIONS_API_KEY, written by the
+        The env file holding BOT_TOKEN, CHAT_COMPLETIONS_API_KEY and
+        SEARCH_API_KEY, written by the
         operator-secrets collector and read by the service. Rests on /var,
         which devices/hetzner puts on LUKS.
       '';
@@ -247,7 +256,7 @@ in
     };
     users.groups.assistant = { };
 
-    # The two credentials a human carries in at first boot: the collector
+    # The three credentials a human carries in at first boot: the collector
     # parks the boot, an operator answers over SSH (or the console), the
     # Bot API proves the token, and only then may the service start.
     # requiredBy installs Requires=/After= on the service, so an absent
@@ -263,6 +272,11 @@ in
         CHAT_COMPLETIONS_API_KEY = {
           description = "API key for the configured model endpoint";
           order = 20;
+          sensitive = true;
+        };
+        SEARCH_API_KEY = {
+          description = "API key for the web search vendor";
+          order = 30;
           sensitive = true;
         };
       };
