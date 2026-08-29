@@ -23,6 +23,7 @@ in
     foundrixModules.config.networking.dns-resolvers
     ./assistant.nix
     ./auto-update.nix
+    ./webhook-door.nix
   ];
 
   users.users.${userName} = {
