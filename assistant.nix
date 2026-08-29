@@ -105,6 +105,10 @@ let
 
     [secrets.search_api_key]
     env = "SEARCH_API_KEY"
+
+    [webhook]
+    public_url = "https://xenia.halogenos.org/telegram/webhook"
+    listen_port = 8085
   '';
 
   # The credential validator for the operator-secrets collector. The
