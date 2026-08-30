@@ -36,11 +36,22 @@ let
 
   assistant = pkgs.rustPlatform.buildRustPackage {
     pname = "halogenos-assistant";
-    version = "0.1.0";
+    # The version is the source's own, read from the pinned input's manifest
+    # — one recorded value, so a bump in the source repository cannot drift
+    # from a second literal here.
+    version =
+      (builtins.fromTOML (builtins.readFile "${inputs.assistant-src}/Cargo.toml"))
+        .workspace.package.version;
 
     src = workspace;
     sourceRoot = "${workspace.name}/halogenos-assistant";
     cargoLock.lockFile = "${inputs.assistant-src}/Cargo.lock";
+
+    # The bot reports the revision it was built from (its runtime-facts tool
+    # reads this at compile time; unset it answers "revision unknown"). The
+    # pinned input's rev is the app commit this build is, so the answer moves
+    # with every pin.
+    env.ASSISTANT_BUILD_REVISION = inputs.assistant-src.rev;
 
     # The source repository's own workflow proves the suite green before a
     # commit reaches its main branch; re-running it on every image build and
