@@ -19,7 +19,7 @@
     # run is explicit here; updating the bot means moving this rev (and the
     # framework's beside it) and committing.
     assistant-src = {
-      url = "git+https://github.com/halogenOS/xos-assistant?ref=main&rev=231c9f007f74845b5ff1dffe76f2262d422df93d";
+      url = "git+https://github.com/halogenOS/xos-assistant?ref=main&rev=374b819bc2369c4609a5294cf5d54a1532576bb3";
       flake = false;
     };
     # The ledger framework the assistant's workspace names by a relative
