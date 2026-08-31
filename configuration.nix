@@ -128,6 +128,9 @@ in
   # 2026-08-27). Swapped from vertex/gemini-3.7-flash@eu for cost and
   # capability.
   custom.assistant.model = "sference/glm-5.3-flash";
+  # GLM-5.3-Flash serves a 1M-token window (1048576), as documented by the
+  # model's provider listings; checked 2026-08-31.
+  custom.assistant.contextWindow = 1048576;
 
   # nameservers and FallbackDNS come from foundrix's dns-resolvers module
   services.resolved.settings.Resolve.DNSSEC = "false";
