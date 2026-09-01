@@ -1,46 +1,500 @@
-Changes from 5436fde95c93 to d995110e43d1:
+Changes from d995110e43d1 to 9ff182e10ae0:
 
-2026-08-31 09:54  core: answer /compact with the operator's copy
+2026-08-31 16:19  tests: the restart test awaits the first process's stop
 
-The command answers "Compaction finished" — the operator's wording,
-verbatim. The line confirms that the command took effect and explains
-nothing; the mechanism lives in the group operator contract, which a
-confirmation would only go stale repeating, as the unit 45 line did
-when unit 48 changed what compaction does. Decision 0191 records the
-choice and what it beat.
+The model-swap test dropped its first fixture and started a second process on
+the same store. A drop releases the handle, not the assembly: the reactor and
+the per-conversation schedulers keep running on the test's runtime and wake on
+the store's row changes, so under load the dropped process could claim the
+next owed turn and answer it from the old scripted provider, leaving the
+second process's scripted turn unrun. The fixture gains an awaited shutdown
+that stops the assembly through the interrupt the core already settles turns
+with, confirmed by the status block the teardown appends; the test uses it.
+The suite's other restarts either drop a whole per-process runtime or keep
+both assemblies alive on purpose, and stay as they are.
 
-The ignored test demanding the answer describe the summarized half is
-deleted rather than unignored: it recorded a copy gap for the operator
-to settle, and the operator settled it the other way.
-
-Test: fmt, clippy -D warnings, the workspace test suites, and doc with
--D warnings all exited 0 after the change.
+Test: cargo test --workspace passed; the restart test passed 20 consecutive runs single-threaded.
 ---
-2026-08-31 11:20  core: a failed turn is silent in the chat
-
-A failed turn used to answer with one fixed line, and a payment-class
-refusal was the one cause that passed without it. The line arrived
-unsolicited when a restart cut a stream mid-turn, doubled under a torn
-stream, and nothing about it was actionable in the chat.
-
-Every failure now passes without a word: the stream-error arm delivers
-what the dead turn already put on the ledger, writes one information
-line naming the conversation and the error, and sends nothing. The
-notice constant, the payment classification and the Notice reply kind
-go; the latch and the addressed re-engagement stay exactly as they
-were. Decision 0192 records the choice; 0025 and 0057 carry the
-amendment note.
-
-Test: fmt, clippy -D warnings, the workspace suites and doc -D warnings
-all exited 0 after the change.
----
-2026-08-31 11:20  Merge unit 49: a failed turn is silent in the chat
+2026-08-31 16:19  Merge unit 50: the restart test awaits the first process's stop
 
 ---
-2026-08-31 11:21  assistant: version 0.4.2
+2026-08-31 17:43  Retract an answer on an administrator's deletion command
 
-The failed-turn silence ships as its own release: unit 49 plus the
-/compact answer wording.
+An administrator replying /del to a member's message already had the stored
+copy erased through the deletion mirror, but the same reply aimed at one of
+the assistant's own messages was ignored: the answer stayed in the chat and
+in the model's context. Now that reply takes the message back. The adapter
+deletes every chunk of the delivery in batches of at most one hundred ids,
+the ledger records one retraction fact keyed on the delivery, and the
+session is forked without the answer's blocks and without every quote
+derived from them, so the next model turn no longer sees the retracted
+words. An answer already folded into a compaction digest is scrubbed
+through the digest rebuild the erasure uses. The fork settles an in-flight
+turn first, the same way a compaction does. A member's /del keeps meaning
+nothing, an edited command acts on nothing, and a platform refusal (too
+old, already gone) is logged and dropped while the retraction stands.
+Lookups for the delivery scope over the channel's whole thread lineage, so
+a /del still resolves after a compaction moved the conversation.
+
+The known cost is stated in the privacy documents: when the platform
+refuses the deletion, the chat keeps text the assistant itself has dropped.
+Decisions 0193 and 0194 record the shape; 0183 carries a dated amendment;
+the unit document carries the supersessions of its earlier criteria.
+
+Test: cargo fmt, clippy -D warnings, cargo test --workspace and cargo doc
+-D warnings all passed in the worktree; the new retraction suite covers the
+nine acceptance criteria.
+---
+2026-08-31 17:43  Merge unit tg/04: retract an answer on an administrator's deletion command
+
+---
+2026-09-01 08:39  assistant: version 0.5.0
+
+The retraction command ships as its own release: unit tg/04 plus the
+restart-test fix from unit 50.
 
 Test: cargo check --workspace exited 0 with the bumped version.
+---
+2026-09-01 09:50  docs: units: name the framework branch main
+
+Four unit records used to describe the framework trunk this workspace
+path-depends on as master, which is what that repository's branch was
+called when the records were written.
+
+That branch is called main now, and the records say so.
+
+This change rewrites the seven references across the four records: the
+framework commits a unit built against, the sentences about a framework
+slice merging before a unit can build, and the green-against line in the
+date-marker record. Only the branch name changes, in the consumer's own
+prose about the other repository. The framework commit hashes stay as
+they are, no code is touched, and no git history is rewritten.
+
+Observed while renaming the framework branch: these records were the
+only places in this repository still naming the old branch, and a reader
+checking which framework state a unit was built on would have looked for
+a branch that no longer exists.
+
+Cross-repository records are read exactly when someone is reconstructing
+what a unit was built against, which is when a wrong branch name costs
+the most.
+
+Test: grep for master across the repository (no branch-name hits remain)
+---
+2026-09-01 10:59  docs: name the subscription that hears the deletion
+
+Before, the unit 51 spec said the block watcher's filter admits the
+conversations table as a wake, and rested F1's claim that a deleted
+conversation ends its actor set promptly on that.
+
+The filter tests for blocks, conversation_blocks and the content tables
+and nothing else, so the sentence named a subscription that does not
+carry this event. The path that does carry it is the scheduler's own,
+which reacts through a table-blind watcher and wakes on any change at
+all. The spec now names that one, states that the block watcher's
+filter is a separate subscription this unit does not widen, and records
+the correction beside the withdrawn anchor_of requirement.
+
+An implementer reading the old sentence would have gone looking for a
+filter to widen, found the widening unnecessary, and had to decide
+alone whether the spec was wrong or the wake was missing.
+
+Test: read both subscriptions in the framework tree and confirmed the
+filter's table list and the scheduler's bare react call.
+---
+2026-09-01 12:21  core: answer the framework's new tool refusal and missing conversation
+
+The tool suites used to match the three outcomes a tool call could end
+with, and the ratchet's run used to answer a conversation's state
+directly. The framework's compaction work added a fourth outcome, the
+refusal a tool states about a call it will not carry out, and made the
+run's answer say first whether the conversation still exists.
+
+Both are now answered where the app reads them. Every exhaustive match
+over a tool outcome names the refusal beside the outcomes it already
+refused, and the three tests that run the ratchet directly read the
+conversation's existence before its state.
+
+This touches the tool modules' own suites and three spine tests, and
+nothing the assistant does at run time: no tool in this app returns a
+refusal today, and every conversation those tests run exists. The arms
+are there so the day one does, the match names it instead of falling
+through.
+
+The framework's compaction unit merged first, as the app builds against
+it directly, and the app stopped compiling on the two shapes it changed.
+
+A match written as a wildcard would have compiled here and gone quiet
+when a real refusal arrived. Naming every arm keeps the compiler as the
+thing that finds the next one.
+
+Test: nix develop -c cargo test --workspace (all suites passed; 316 core spine, 257 core unit, 97 telegram adapter, 42 assistant)
+---
+2026-09-01 12:21  core: end the run when the core can serve no message at all
+
+A database failure used to reach the adapter as one undifferentiated
+storage error, and every one of them was treated as this message's
+problem: the batch halted, the loop backed off, and the update
+redelivered. That is right for a refused write and for a race with
+another writer. It is wrong for a database that is damaged, is not a
+database, or whose one writer is gone, where the same failure meets
+every later message and the intake spins against a store that can never
+answer.
+
+The core now states three distances instead of two. A failure is
+terminal for its message, transient for its message, or fatal for the
+process: nothing the process is asked from here on can succeed. The
+fatal answer covers exactly the two classes the store hands back for
+that case, an unusable database and a departed writer.
+
+The Telegram adapter carries the fatal answer out of both its intakes.
+The per-update step reports it as a stop, the poll loop persists the
+offset it reached and ends the run, and the webhook consumer refuses the
+delivery it was working on and ends the run. Either way the run entry
+answers that the core cannot serve, the process exits, and the update is
+still on the platform for the process the supervisor starts next. The
+adapter reads the core's statement and never a variant name, so this is
+one more answer on the edge that already existed, not a second
+mechanism. The sender's authority resolution moved into a method of its
+own so the step stays one readable piece.
+
+Two tests exercise the whole path, one per intake, by killing the
+store's writer thread the way a bug would: the polling run ends with the
+offset unmoved, and the webhook run ends with its delivery never
+acknowledged. Both fail against the old code by never ending at all.
+
+Test: nix develop -c cargo test --workspace (all suites passed; 316 core spine, 257 core unit, 97 telegram adapter, 42 assistant)
+Test: nix develop -c cargo clippy --workspace --all-targets --all-features -- -D warnings (clean)
+Test: nix develop -c cargo fmt --all -- --check (clean)
+Test: RUSTDOCFLAGS="-D warnings" nix develop -c cargo doc --workspace --no-deps (clean)
+---
+2026-09-01 13:05  docs: record where a store failure is judged
+
+The unit's F4 said the store actor ends the process itself on the classes it
+reads as impossible state, and the app half was still unwritten against that
+sentence.
+
+It now says the actor classifies and propagates, and the code that knows the
+blast radius decides: the app states two classes as fatal and each intake ends
+its run with the message unacknowledged.
+
+F4, AC7 and AC8 are rewritten to the merged shape, A4 names the decision the
+implementer has to write, the abort-at-the-chokepoint position joins the
+rejected alternatives with the reason it lost, and the user's words that
+replaced it are added to the appendix verbatim.
+
+An implementer reads the spec as authority. Left as it was, this one ordered
+work that contradicts code already on main, and the run would have stopped on
+the contradiction or built the wrong thing.
+
+The unit's remaining work is the app half, and it starts from this page.
+
+Test: read the amended sections back against the merged classifier in
+crates/core/src/error.rs and the stopped path in the telegram driver; every
+sentence matches what is on main.
+---
+2026-09-01 14:57  docs: say what a turn that wrote nothing does to the capture
+
+A1 said the capture concludes when the framework predicate reads true and
+prose is there, and said nothing about a turn that ends having written no
+prose at all. The predicate reads true over a conversation whose turn never
+started, so no reading of A1 could conclude on emptiness, and the capture
+waited out its whole three-minute bound on the incident's own failure shape.
+
+A1 now names a third fact: a stream terminal for this conversation seen since
+the unlatch. Predicate true, no prose, turn seen to have ended — those three
+together answer None at once. A1's rule stands; a terminal on its own still
+concludes nothing, and one a lagged subscription drops costs only the bound.
+
+AC1 states the same and calls a parked empty turn a failure of the criterion.
+Two more entries join the known consequences: A2's settle failure leaves a
+temporary standing once per failed attempt and a deaf turn keeps writing into
+it, and the framework predicate is not monotone across a tool-use turn, so an
+early capture survives as a race the app cannot close.
+
+Three readers found the parking hole independently, from different lenses, and
+the code it replaces failed the same case in milliseconds. Leaving it would
+have shipped a regression inside the one shared compaction driver, where every
+other conversation's door waits behind it.
+
+Test: read the merged framework's provider-error path, which discards the
+streaming tails and writes nothing, then the capture loop against it; the
+predicate reads true, the ledger holds no prose, and the loop waits.
+---
+2026-09-01 15:43  core: end the compaction's capture on the turn, not on the message
+
+The compaction's capture used to conclude on the model stream's end signal.
+A message's end is not a turn's end, so a turn that wrote half its summary
+and reached for a tool was captured half-written, and the summary installed
+over the conversation's first half was prose the model had not finished
+saying. The capture also ended on a signal it could miss: a lagged
+subscription dropped the end and the capture waited out its whole bound over
+a turn that was long over.
+
+The capture now concludes on the ledger. It asks the framework's own
+durable-turn predicate whether every block is durable and no tool outcome is
+still owed, then reads the newest assistant prose past the instructions
+block. Both facts come off stored state, so a dropped or lagged wake costs
+the capture a wait and never an answer. A turn that ends WITHOUT prose ends
+the capture too, and that needs a third fact to tell it from a turn that has
+not started: a stream terminal for this conversation seen since the unlatch.
+Only all three together answer nothing at once.
+
+This change reworks `capture_summary` in the core's session module around a
+`CapturedTurn` reading and a `CaptureWakes` subscription that folds the
+terminal it has seen into the same wake it already takes, so one burst of
+streamed deltas costs one ledger read instead of one per delta. The bound
+around the capture stays where it was and now interrupts the turn and awaits
+that interrupt's own settle before it reads anything. Retirement gained the
+same ordering: it settles the turn before it deletes the conversation, so a
+stopping turn's writes can never target a deleted id, and a settle that fails
+deletes nothing and fails the compaction. The settle itself learned to read
+the stored streaming tail before it decides to wait, because the framework
+commits a turn's final text before it emits the terminal and a caller that
+concluded from that text arrives with an observation still open and a
+terminal already past. Two decision documents record where a store failure is
+classified and that a palette decline is a typed refusal on the outcome row.
+
+Observed as a production stall: every compaction on this deployment sat in
+the one shared driver loop for its whole bound, and the door it holds is the
+door every other conversation waits at. The half-written summaries were the
+same cause seen from the other side.
+
+A compaction that concludes from the ledger cannot install prose the model is
+still writing, and one that fails does so in milliseconds instead of holding
+the shared loop for minutes. The framework race this does not close — the
+predicate is not monotone across a tool-use turn — is recorded in the unit's
+known consequences and belongs to the framework; the compaction turn is
+offered no tools, so it cannot reach the capture there.
+
+Test: cargo fmt --all -- --check (exit 0)
+Test: cargo clippy --workspace --all-targets --all-features -- -D warnings (exit 0)
+Test: cargo test --workspace (exit 0; 316 spine, 266 core, 97 telegram and the rest, 0 failed)
+Test: RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps (exit 0)
+Test: with the third fact removed, the empty-turn test fails Elapsed at 5.05s; with the stored-tail read removed from the settle, the stale-open test fails StreamUnsettled
+---
+2026-09-01 15:44  docs: say what makes a settle fail
+
+A2 used to say only that `retire` settles before it deletes and that a
+failed settle stops the deletion. It said nothing about what makes a settle
+fail, so the reading anyone would take from it — the stream observation says
+open, so wait for the terminal — is the one that reports a finished turn as
+unsettled.
+
+A2 now states the rule the code holds: the stored streaming tail decides
+whether there is a wait to take, and the observation alone never does.
+
+This adds a paragraph to A2 naming the ordering that makes the observation
+insufficient (the framework commits a turn's final text before it emits the
+terminal), what each case does (a tail present keeps the wait, a tail absent
+goes straight to the stored-state confirmation), and the outcome the rule
+deliberately leaves alone (a provider deaf to the interrupt still holds its
+tail and still fails loudly at the bound). Nothing else in the unit moves.
+
+The rule was found by the re-verifying correctness reader as a race the
+implementation had just introduced, and the first attempt at fixing it was
+wider than this — it settled the deaf provider's stream too, which three
+erasure tests caught immediately. The boundary between the two is what this
+paragraph exists to state.
+
+A settle is run by erasure and by session replacement as well as by the
+compaction, and each of them reads this criterion to decide what a failure
+there means. Stating what the failure is made of stops the next reader from
+re-deriving it from the observation.
+
+Test: read A2 against crates/core/src/streams.rs settle_stream after the merge; every case the paragraph names has a test in the suite that ran green at 790db48
+---
+2026-09-01 16:55  docs: state what a palette says when it turns a tool away
+
+A conversation compacting itself admits no tools, and the model that calls
+one anyway is told the tool is not in a palette it has never seen. The
+sentence describes an internal record and teaches the model nothing it can
+act on.
+
+Unit 52 gives the palette a stored refusal sentence. The compaction writes
+its own words onto the palette it records; the admission wrapper reads them
+back and says them, keeping its one rule for every conversation. The spec
+carries ten acceptance criteria, the alternatives it beat, and the user's
+words verbatim.
+
+Test: none, a document.
+---
+2026-09-01 17:09  docs: widen unit 52 to the path a compaction actually takes
+
+The unit gave the palette a refusal sentence and stopped there. Two
+unbriefed reviews of it read the framework's own tool path and found the
+larger half missing: a compaction is shown no schemas, so the tool call it
+invents names a tool that does not exist, never reaches the assistant's
+palette at all, and is answered by the framework with the sorted list of
+every registered tool as an ordinary failure counting toward no bound. One
+hallucinated call hands the model the whole registry and the rest of the
+turn to spend on it.
+
+The unit now has a framework half and an assistant half. The framework's
+unknown-tool answer names what the turn was offered instead of what the
+process registered, reading the one fact the dispatch already decides, and
+answers a turn offered nothing with a refusal so a run of them reaches the
+forced turn end. The assistant half is unchanged. Today's three refusal
+sentences are recorded so "unchanged" is checkable, the composed new one is
+written out in full, and fifteen criteria replace ten.
+
+Test: none, a document.
+---
+2026-09-01 17:42  docs: rewrite unit 52 to the recorded tool choice
+
+The unit described a wording change to the app's decline sentences and a
+filter at the framework's dispatch. Both left the same fact stated in two
+places: a hidden boolean on the block kind, and a consumer block the
+framework never reads.
+
+The session's tool choice becomes a framework block kind recorded in the
+conversation's ledger. The dispatch offers what it names, the runner
+resolves against it, an empty list is the whole answer for a conversation
+with no tools, and the compaction fork records that itself. The kind hook
+goes, and so do the app's palette kind and the wrapper around every
+handler. Twenty-six criteria, two decisions left open and named.
+
+Test: none, a document.
+---
+2026-09-01 19:05  docs: decide the two open points from the scoping document
+
+The spec left two decisions open: what a conversation with no recorded
+choice is offered, and whether the framework learns to withdraw a content
+descriptor. A tool-scoping description from another project settles the
+first: the record is exposure, not enforcement, so a ledger carrying none
+filters nothing and the admission hook stays the check that fails closed.
+The delete order settles the second: the palette table cannot be removed
+while the registry refuses to reopen without it, so withdrawal is added.
+
+Also from the document: one function resolves the effective set for both
+the dispatch and the runner, and a name outside the choice reads exactly
+like a name that never existed, so the registry is never disclosed.
+Criterion 7 now asserts that equality.
+
+Test: none, a document.
+---
+2026-09-01 19:27  docs: close what the two fresh reviews found in the spec
+
+Six findings, all verified against the trees before acting. The record
+kind must be transparent to the frontier walk, or a delta append over an
+unanswered message buries it; criterion 1 now exercises that. The
+resolved set is stated as the intersection of choice and registry, with
+its own criterion. The empty set gets its own sentence, stating the
+conversation has no tools instead of repeating the empty-registry claim
+that would be false beside a populated registry. The admission pass's
+load-failure arm is stated: it stands down unresolved, and the app's
+transient decline goes with the wrapper as a recorded decision. The
+palette grep widens to prose so six files of module docs do not keep
+describing a deleted mechanism. The header self-citation names the
+commit the code claims were read at instead of a head that moves.
+
+Test: none, a document.
+---
+2026-09-01 21:43  core: read the session's tools off the framework's record
+
+The assistant used to answer "which tools does this conversation have" by
+itself. It kept a block kind of its own, in a content table of its own,
+written at a channel's first contact and superseded whenever the registered
+set differed, and it enforced the answer by wrapping every registered
+handler: the wrapper loaded the conversation's ledger a second time inside
+each call, checked the recorded list, then checked the authority decision
+0043 requires, and forwarded six of the handler trait's seven methods by
+hand.
+
+Now the record is the framework's own tool choice, kept in a library table,
+and the framework reads it at both the moment that decides what a turn is
+offered and the moment that decides what a call resolves against. The
+authority check is the only rule left to this repository, and each tool
+answers it through the framework's admission hook over the ledger snapshot
+the runner already loaded.
+
+This change deletes the block kind, its descriptor, its newest-list read,
+the reconciliation that superseded it and the handler wrapper. First contact
+and the three activity paths that reconciled the old record now append the
+framework's choice, on the same schedule and under the same memory bound.
+Neither compaction fork supplies a record any more, because the fork door
+writes the empty one itself. Every tool declares its bar in its own module
+and answers the hook with one shared function, so the wording of the decline
+and its refusal classification stay exactly what they were. The tool set
+registers a handler as it is admitted instead of wrapping it, which is why
+the authority no longer travels as a registration argument. A migration step
+drops the withdrawn table and clears its registry row, and the store
+configuration names the table as withdrawn so a database that registered it
+opens at all.
+
+Two answers to one question is one answer too many. The wrapper's per-call
+second ledger read could disagree with the pass around it, and a trait
+method added after the wrapper was written would compile and never fire.
+Both were living in this repository because the framework offered no seam
+with ledger access; it offers one now.
+
+A tool a conversation does not have is refused before any handler runs, and
+the sentence the model reads names that conversation's own tools and never
+the process registry. Nothing here decides what a compaction turn may call:
+that word belongs to the library that owns the fork.
+
+Test: nix develop -c cargo fmt --all -- --check (clean)
+Test: nix develop -c cargo clippy --workspace --all-targets --all-features -- -D warnings (clean)
+Test: nix develop -c cargo test --workspace (829 passed, 0 failed)
+Test: RUSTDOCFLAGS="-D warnings" nix develop -c cargo doc --workspace --no-deps (clean)
+---
+2026-09-01 22:44  docs: let criterion 19 admit what criterion 25 forces
+
+Criterion 19 demanded a palette grep with zero hits while criterion 25
+demands a migration that names the table it drops, so the two could not
+both hold and every review lane flagged the pair. The criterion now
+states the residue precisely: the schema constant, the migration built
+from it, the previous-build fixture, plus history and unrelated
+subjects, all enumerated with reasons by a scan test that fails on any
+new hit.
+
+Test: none, a document.
+---
+2026-09-01 23:06  core: close what the adversary round raised on the tool choice
+
+The critics' round found one regression and a set of overclaims. The
+regression: databases from the previous build keep header rows of the
+withdrawn palette kind forever, and with the kind unclaimed those rows
+went opaque to the debt walk, so an unanswered message directly behind
+one stopped owing its turn. The walk's read-through set now names the
+withdrawn stored string — history stays transparent — and the test that
+reproduced the loss asserts the restored behaviour.
+
+The rest: the admission module's doc claimed a structural guarantee the
+framework's admitting default does not give, and now states the opt-in
+contract and the scan that holds it, with the ten identical per-tool
+bodies collapsed into one macro; the span-partition assertion exempts by
+position instead of by kind, so an unexpected block inside the inherited
+run fails again; the choice currency check compares the set instead of
+the order, since the compaction forks made the framework a second writer
+of records; the outside-the-choice test asserts the framework sentence's
+structure instead of its bytes, keeping byte-exactness for this app's
+own authority decline; the tool-name list carries one name; and the
+reconciliation doc cites the decision that split exposure from
+enforcement instead of stating the behaviour bare.
+
+Test: cargo fmt, clippy, test and doc all exited 0 in the worktree after
+the last write.
+---
+2026-09-01 23:06  docs: count the read-through among the withdrawn name's homes
+
+Restoring the debt walk's transparency for the withdrawn kind's header
+rows gave the surviving string two more homes, the read-through entry
+and its test. Criterion 19 now names the classes and makes the scan
+test the authoritative enumeration instead of restating the list.
+
+Test: none, a document.
+---
+2026-09-01 23:06  Merge unit 52: the session records which tools it has
+
+The app half: the palette kind, its wrapper and the reconciliation copy
+are deleted, the conversation's tools ride the framework's recorded
+choice, the authority check of decision 0043 answers the framework's
+admission hook with its sentence unchanged, and a domain migration
+withdraws the palette table with the store verifying the drop. The debt
+walk keeps reading through the withdrawn kind's header rows, because
+existing databases carry them forever.
+
+Test: cargo fmt, clippy, test and doc all exited 0 in the worktree at
+f2c1c8e.
 ---
