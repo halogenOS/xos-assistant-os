@@ -3,17 +3,17 @@
     "agent-ledger-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1788629714,
-        "narHash": "sha256-aZy2pFmHjWED1TPZZlMJZO2r/3/9dDgBR0NOYAxzYlc=",
+        "lastModified": 1788902101,
+        "narHash": "sha256-zHUgNwC7CcZodeVQiaMHESDw3XZkb12S9zVs9hKwSbk=",
         "ref": "main",
-        "rev": "2220fcadd51e629425387497b35ebba8f9f779ed",
-        "revCount": 116,
+        "rev": "48358ac5f29e6aa8b0ba7fc00e5a26f4e22a1057",
+        "revCount": 117,
         "type": "git",
         "url": "https://github.com/xdevs23/ronna-core"
       },
       "original": {
         "ref": "main",
-        "rev": "2220fcadd51e629425387497b35ebba8f9f779ed",
+        "rev": "48358ac5f29e6aa8b0ba7fc00e5a26f4e22a1057",
         "type": "git",
         "url": "https://github.com/xdevs23/ronna-core"
       }
@@ -21,17 +21,17 @@
     "assistant-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1788627921,
-        "narHash": "sha256-WWb1foCc8eRlM41Q3VQeaUtEWXhfF6X5+z/1Nhcqwt8=",
+        "lastModified": 1788901756,
+        "narHash": "sha256-LgGVFj8sV5OFpl8D6kgYuWhADtGeyWpaDVcu0yzmoVw=",
         "ref": "main",
-        "rev": "b26edb80ecde3d9ad78a157223bd487be4e17170",
-        "revCount": 352,
+        "rev": "88c616831263e0a788b2350a11861835e0a83991",
+        "revCount": 354,
         "type": "git",
         "url": "https://github.com/halogenOS/xos-assistant"
       },
       "original": {
         "ref": "main",
-        "rev": "b26edb80ecde3d9ad78a157223bd487be4e17170",
+        "rev": "88c616831263e0a788b2350a11861835e0a83991",
         "type": "git",
         "url": "https://github.com/halogenOS/xos-assistant"
       }

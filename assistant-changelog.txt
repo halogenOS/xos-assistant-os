@@ -1,344 +1,49 @@
-Changes from 8188665 to b26edb80ecde:
+Changes from b26edb80ecde to 88c616831263:
 
-2026-09-05 19:05  core: speaking is an action
+2026-09-06 01:34  tests: observe completed notes and retained retraction commands
 
-The assistant used to relay the model's text to the group and derive
-the reply target after the fact, so a reply could land on the wrong
-message and nothing recorded that a message had been sent as one act.
+The prompt-migration test accepted unfinished assistant output. The
+refused-deletion test expected its command and the next message to share
+one projected input, although interruption could separate them.
 
-A message reaches the chat only through two tools, send_message and
-reply_message onto a named message id. Each appends an outgoing block
-that the outbound edge delivers and the delivery receipt settles, and
-the model's text is private notes. Every message the model reads
-carries an envelope with the writer, the platform's own send time and
-the id. Old sessions receive one recorded notice at the moment the
-tools joined their choice. Three shared per-chat cap tiers bound the
-sends, the typing cue keys on the sending tools, and the budget counts
-a delivered send.
+The migration fixture waits for the completed notes before shutdown. The
+retraction fixture holds the closing round and observes its interruption,
+then checks command retention and the following answer independently.
 
-This change adds the outgoing block kind, the two sending tools and
-their contract, the envelope in the projection, the recorded notice for
-old sessions, the cap tiers and the cue's new key, a fixture from the
-previous build proving old rows render identically to fresh ones, and
-the spine tests for each. The contract notice is written before the
-tool choice it explains and only when the conversation holds none, an
-unroutable channel fails the pending send through the same door as any
-other failure so the call settles and the cue stops, the tools' names
-live once in the sending module, and the reply tool parses its
-parameters once.
+Add a live unfinished-output discriminator, check the retraction's delivery
+and removed answer, and reuse the adapter's ledger wait for exact content.
+Correct the deletion tests' acceptance-criterion references.
 
-A relayed text left the reply target to a guess and the send itself to
-inference from the model's words.
+These observations distinguish stored completion from an open stream and
+exercise deletion while the answer's closing round is still unfinished.
+The tests no longer depend on incidental timing or message grouping, while
+retaining the migration and retraction contracts. Product behavior is unchanged.
 
-A message the assistant sends is one recorded action with one delivery
-receipt, and a reader of the ledger sees who said what and when.
-
-Test: cargo fmt, clippy, test and doc ran bare in the worktree after the last write and each exited 0 (339 spine, 309 core and 97 adapter tests, 0 failed), and a test ran one call's body twice against a real store and asserted one filed message.
+Test: cargo fmt --check (passed)
+Test: cargo test -p assistant-core --test spine assembly:: (8 passed)
+Test: cargo test -p assistant-adapter-telegram --test adapter retraction:: (4 passed)
+Test: cargo test --workspace (949 passed, zero failed or ignored)
+Test: cargo build --workspace (passed)
+Test: git diff --check (passed)
 ---
-2026-09-05 19:05  core: run the sends in order, ask the caps once, and stop the cue when a send is done
+2026-09-08 23:09  answering: teach the recent-message rule after resuming
 
-The sending pair used to take a filing lock around its scan and append,
-answer the caps from a free reading of the loaded ledger, and read what
-became of a send by matching the provider's echo against every
-resolution in the conversation. The composing cue lit on a starting
-send and ended on the stream's terminal or on a failed send alone, so a
-delivered or cut-short send left the chat showing the assistant typing
-until the turn ended, and a call refused before it filed anything left
-it typing with no send coming at all.
+The reply tool allowed answers to any message in the conversation, and the
+answering instructions did not distinguish a resumed conversation from an
+active exchange.
 
-Both tools answer the framework's runs_in_order hook, so a ready call of
-either waits for every earlier one of the conversation, and with that
-order the filing lock is gone. The caps are one reading inside the
-admission answer, over the ledger that order makes exact. A send's state
-is read through the framework's own pairing of a call with its outcome,
-by block id. The cue stops when the send is done whichever way it ended,
-and a refusal before filing raises the same stop from the tool.
+The instructions now exclude member messages more than ten member messages
+back after unlatching or when the last successful group send is more than
+twelve hours old. Reporting remains the exception under its existing rules.
+Both sending tools follow this instruction, and older history stays available
+as context. The reply description no longer grants unconditional permission
+to answer an old member message.
 
-This change drops the filing door from the sending tools and hands them
-the cue's stop channel, turns the admission macro's further reading into
-a method of the handler, reads a send's state through ToolCall::outcome_in,
-pairs sends with outcomes by block id in the test helpers, reads a stored
-cap stamp through one function that says out loud when the stamp is
-unreadable, removes a dead helper from the telegram suite, folds an
-ancestor reference naming no conversation to a thread that continues
-nothing, and records the order and the pairing in the unit's
-specification.
+This addresses answering an old backlog after a break. Composition tests
+check both triggers and every answering mode without teaching unavailable
+reporting tools. They verify the instruction, not model compliance.
 
-The cue was seen outliving a delivered send, a second serialization sat
-beside the order that already serializes the sends, and the caps had no
-proof through the registry, the admission pass and a real store.
-
-A cap answered once cannot disagree with itself, an order that is the
-only serialization cannot deadlock against a lock nobody needs, and a
-chat that stops typing when the send is done tells the truth about every
-ending. One case stays ignored and named in its doc comment: the
-re-forked channel's compaction in the reset suite, whose fixture's
-shutdown left a compaction worker running.
-
-Test: cargo fmt, clippy, the workspace tests (919 passed, 1 ignored, the sixth send refused through the framework's runner and the refusal that stops the cue among them) and the doc build with -D warnings each exited 0 in the worktree.
----
-2026-09-05 19:05  core: count the cue per send, stop the workers on shutdown, and end the process on a nameless ancestor
-
-The typing cue counted one signal per conversation and one begin per
-turn, so a turn issuing two sends went dark the moment the first
-receipt arrived while the second message was still on its way. The
-assembly spawned the compaction driver and the retention sweep with
-their handles dropped, so nothing could stop either one, and a test
-process that stopped left its compaction worker compacting against the
-store the next process opened. A stored ancestor reference naming no
-conversation panicked inside a spawned task, so it ended one task and
-left the process serving. The composing edge read the cue's begin and a
-send's ending off two channels under an unbiased select, so an ending
-could be counted before the begin it answered.
-
-The cue counts the sends that started and have not ended and goes dark
-when the last of them is done. The assembly has one shutdown that ends
-the two workers and waits for them, the binary takes it at the end of
-its run whichever arm answered, and the fixture takes it after its
-interrupts, so a stopped process writes nothing more. The nameless
-ancestor is a fatal failure that every unattended path carries to the
-same reading, and the spawned erasure raises the process's exit signal
-on it. The composing edge reads its two carriers in one order, bus
-first.
-
-This change gives the lineage walk a result that the erasure walks and
-the retraction lookup carry, adds an error variant classifying fatal
-beside the store's refused statement, exposes the raw cue carrier so the
-refused and cut-short cases read the ending off it, gives the composing
-edge one lag answer for both carriers and one place computing a
-signal's deadline, moves the sending pair's in-order answer into one
-macro beside the admission macro, renames the caps' admission answer
-for the two things it does, asks every registered tool the in-order
-hook so a third sending tool without it fails loudly, and runs the
-previously ignored lifecycle case again beside a case proving a stopped
-assembly writes nothing.
-
-The ignored lifecycle case read a head carrying the first process's
-composed prompt, which only a worker the shutdown never stopped could
-have written, and the panic and the unordered carriers came out of the
-same reading.
-
-A process that ends its work leaves the database alone from that
-moment, a corrupted stored shape stops the process instead of one task,
-and the cue's count no longer depends on which channel a select polled
-first.
-
-Test: cargo fmt, clippy, the workspace tests (345 spine, 322 core, 97 adapter, 45 binary, 0 ignored) and the doc build with -D warnings each exited 0 in the worktree, the re-forked compaction case passed ten runs of ten alone, and the stopped-assembly case passed five of five.
----
-2026-09-05 19:05  core: refuse the deletion ask once the shutdown has begun
-
-The adapter's arm of the serve select returned before the shutdown
-beneath it ran. A confirmed erasure was spawned with its handle dropped
-and went on deleting past the shutdown, or was cut midway with some of
-a person's rows emptied and others standing. A deletion asked in the
-last seconds of a process was filed like any other, so the person read
-the confirm instruction and was then refused, and the refusal spent one
-of their shared privacy-reply grants on an answer that changed nothing.
-
-The shutdown runs on every serving arm. It aborts the compaction driver
-and the retention sweep, whose half-done work a later sweep reclaims,
-and waits for every running erasure to its end. Whether the shutdown
-has begun is one recorded fact, raised under the worker lock and held
-by the pending memory, which answers a filing with what it did: filed,
-or refused because the shutdown has begun. The command path's ask and
-confirm and the privacy tool's deletion request relay that answer with
-one fixed line and file nothing this process cannot honour. On the tool
-the refusal is the framework's typed refusal carrying the stopping
-result. Decision 0200 records the shutdown's shape, the fixed line word
-for word, and the alternatives that lost.
-
-This change keeps the erasure among the workers, adds the stopping fact
-in a module of its own that the assembly and the pending memory import,
-gives the pending memory a filing answer, makes the privacy tool answer
-the framework's outcome directly, moves the shutdown to the end of the
-binary's run on every arm, and adds the spine cases for a held erasure
-released only while the shutdown waits, an ask and a confirm after the
-shutdown began, and a stopping deletion request through the tool.
-
-The privacy confirmation runs inside a framework actor the shutdown
-does not stop, so an erasure could be spawned after the workers were
-taken and awaited by nobody, and a model looping on the ask during a
-drain would have drawn successful calls while the person's own
-/privacyout went silent.
-
-A shutdown leaves no promise half kept: an erasure that started ends,
-and a deletion that cannot start is refused with the same sentence on
-both surfaces.
-
-Test: cargo fmt, clippy, the workspace tests (349 spine cases among them, the new refusal case failing on an Ok answer or a spent grant) and the doc build with -D warnings each exited 0 in the worktree.
----
-2026-09-05 19:05  core: spend a reply grant on every answer the privacy window delivers
-
-The reply window used to carry a stand-down answer that handed a grant
-back for the shutdown's refusal, a per-arm policy the window could not
-hold since it never learns what a change wrote. The rights module doc
-and decision 0200 said a loop on that refusal spends at most five of the
-person's eight answers and named the framework's default of five, which
-this application never sets, and the comment over the merged arm of the
-channel reset conflated two silences.
-
-The window keeps one protocol: the change runs when the window grants,
-a failed change hands its grant back before the transient decline, and
-every answer that reaches the person spends. On the tool surface the
-framework's forced end counts a trailing run of refusals on the open
-turn, any other tool outcome in between starts the count over, and
-model text resets nothing. On the command surface the reply window is
-the bound, as it has been since 2026-08-23. The rights doc names the
-three records for what each holds: decision 0196 for the forced end,
-0076 for the window, 0200 for how the shutdown's refusal joins them.
-
-This change removes the stand-down variant from the reply window,
-restates the bound in the rights module doc and decision 0200 without
-the framework's digit, separates the two silences in the channel
-reset's comment, hands the search's provider future to the budget
-directly, and counts the project file's three invariants.
-
-The stand-down was a judgment about which answers are free with no
-rule behind it, and the five was never a ceiling on what the window
-spends.
-
-A delivered line is what the bound bounds, on both surfaces alike, and
-the documentation claims only what the framework holds.
-
-Test: cargo fmt, clippy, the workspace tests (934 passed, 14 suites) and the doc build with -D warnings each exited 0 in the worktree.
----
-2026-09-05 19:05  repo: keep the handoff note and the local directories out of the tree
-
-The tree used to track nothing that named a place for a worktree, a
-scratch file or the handoff note, so worktrees and scratch directories
-ended up beside the project in the home directory, where nothing tells
-a needed directory from a leftover, and the handoff note, which names
-sessions, message numbers and branches of the moment, could have been
-committed by a careless add.
-
-Now .worktrees/ and .cache/ inside the repository are ignored, every
-worktree and scratch file of this project lives under one of them, and
-HANDOFF.md is ignored beside TODO.md and LOCAL.md.
-
-This change adds five lines to .gitignore and nothing else.
-
-Five directories sat beside the project on 2026-09-02 with no way to
-tell which were needed, and the handoff note sat in the tree untracked
-by luck alone.
-
-A reader of the home directory sees one directory per project, and a
-public clone of this repository carries no working note.
-
-Test: git status showed the handoff note and both directories ignored once the entries were in place.
----
-2026-09-05 19:05  docs: privacy: hold every sentence of the policy and the records to the mechanism
-
-The privacy policy read as an internal technical description, cited no
-legal basis, and after its first rewrite told a reader that each
-request carries their account ID, that the processor retains nothing,
-that an administrator's deletion leaves our copy in place, and that a
-group still talking keeps its whole history, none of which the code
-beside it did. The record of processing and the impact assessment
-disagreed with the code on the erasure's columns, the message number
-and the compaction summary.
-
-The policy addresses the member in short active sentences, in the order
-a reader wants answered, with the one date in the footer. The basis
-stands once and the objection paragraph carries the Article 21(1)
-override test and the legal-claims exception. Every sentence that
-states a data flow says what the code does: the request's real
-payload, the standing answer as a lookup's result, the deletion
-command's effect on our copy, the older part of a long conversation
-under its own 90 days, the billing records without content, what
-travels in a request and what an erased row projects, and the
-third-party route as a person weighing a request against the writer's
-rights. The record and the assessment carry the six columns erasure
-nulls, the message number and the summary as categories, and dated
-notes where a fact was first recorded.
-
-This change rewrites the policy's voice and order, corrects its data
-flow sentences against the code, corrects the record of processing and
-the impact assessment, and moves the documentation suite to the
-sentences carrying each fact today, with assertions removed for the
-mechanism facts no GDPR article requires: the moderation bot's deletion
-taxonomy, the retraction's refusal path, the standing check, the stored
-emoji record and its per-item retention.
-
-Three external reviews and a keep-or-drop classification of every
-mechanism fact by the article that requires it showed which sentences
-were owed, and reading the survivors against the code showed which
-were false.
-
-A member reads a policy in their own terms, and every sentence in it
-has a line of code or a record entry behind it.
-
-Test: cargo fmt, clippy, the workspace tests (885 across 14 binaries) and the doc build with -D warnings each exited 0 in the worktree after the last document edit that compiled, and again on the merged tree with the sending unit.
----
-2026-09-05 19:05  privacy: promise no answer to the privacy commands and hold the records to the code
-
-The opt-out reply and the policy's opt-out bullet promised an answer to
-every privacy command, while the notice command answers on a shared
-channel budget and can answer with silence. The policy promised a
-marker where every erased thing was, though an erased join projects
-nothing, said a member message travels with its number after erasure
-nulled it, named a route through the commands for plain words that the
-code has no such route for, and stated the join announcement's facts
-and the standing narrower than the rows hold. The records dated some
-notes by the wrong day, said the number opens the projected line, and
-named one setter of the suppression flag.
-
-The reply says the privacy commands still work and no more, and the
-document that records its copy is read back by the documentation
-suite, line by line against the constants. The policy scopes the
-marker, the number and the send time to what a request carries, names
-the four facts a join record keeps and what a deletion leaves of them,
-names the three grades of standing, and says the footer's date is the
-newest edit's. The records date each note by the day its fact was first
-recorded, say the number is carried, and name both setters and the one
-clearer of the flag.
-
-This change edits the opt-out reply and its doc comment, the policy,
-the record of processing and the impact assessment, replaces the
-suite's literal copy of the fixed lines with a reader of the unit
-document's copy block, moves the suite's assertions to the new
-sentences, and adds a count assertion in the join module holding the
-erased columns to the four the policy names.
-
-Each sentence was read against the ingestion drop, the projection
-envelope, the erasure column list and the identity sweep, and was
-wider or narrower than the mechanism it described.
-
-A person who opts out is told what still works and promised no answer
-beyond that, and a copy edit in the unit document that misses its
-constant fails the suite by label.
-
-Test: cargo fmt, clippy, the workspace tests (fourteen binaries ok, 0 failed) and the doc build with -D warnings each exited 0 in the worktree after the last edit.
----
-2026-09-05 19:05  privacy: the policy in the reader's terms
-
-The privacy policy used to name a search provider, a moderation bot,
-the processor's sub-processors and the other members as recipients,
-speak of the assistant reading and judging messages, refer to later
-sections, state facts twice, describe what is kept in prose, and leave
-halogenOS, the assistant, the groups and the chat platform undefined.
-
-The policy opens with definitions and states each fact once in the
-GDPR's own terms. What it keeps is one table with the data, its source
-and what a deletion request leaves. The processor is the only recipient
-named, the chat platform is named once as a controller of its own, and
-what a request carries and what it never carries are two lists. The
-retention section is three paragraphs, the opt-out passage is stated
-once, and the objection sentence names the command and the letter.
-
-This change rewrites the policy whole and edits it through two further
-style passes, and moves every assertion of the documentation suite to
-the new sentences, with one live test holding the three statements a
-pass had dropped. No code path changes.
-
-The controller rejected the previous text for naming parties the
-policy does not owe and for its shape, and checking each rewritten
-sentence against the code showed the retention sentence, the deletion
-promise, the opt-out scope and the username hedge wider or narrower
-than the mechanism until each was held to it.
-
-A member reads what is kept, who receives it and what a deletion leaves
-in one document that matches the code, and the suite fails on the
-sentence that drifts.
-
-Test: cargo fmt, clippy, the workspace tests (fourteen binaries ok, 0 failed, the documentation suite 65 passed) and the doc build with -D warnings each exited 0 in the worktree after the last edit and on the merged tree in the main checkout.
+Test: cargo test --workspace --all-features (950 tests passed)
+Test: cargo clippy -p assistant-core --all-features --all-targets -- -D warnings passed
+Test: rustfmt --check passed for the changed Rust files
 ---
